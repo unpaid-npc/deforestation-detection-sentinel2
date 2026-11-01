@@ -1,0 +1,31 @@
+# Central configuration. Modules read parameters from here instead of hardcoding them.
+
+project:
+  name: deforestation-detection-sentinel2
+  random_seed: 42
+
+aoi:
+  name: rondonia_candidate_1
+  # [min_lon, min_lat, max_lon, max_lat] in EPSG:4326 (about 20 km x 20 km).
+  # CANDIDATE ONLY: to be verified visually before it is final.
+  bbox_wgs84: [-63.00, -10.30, -62.82, -10.12]
+  # Expected projected CRS for this area (UTM zone 20S). The probe prints the real one.
+  expected_crs: "EPSG:32720"
+
+stac:
+  url: "https://planetarycomputer.microsoft.com/api/stac/v1"
+  sentinel2_collection: "sentinel-2-l2a"
+  worldcover_collection: "esa-worldcover"
+
+search:
+  max_cloud_cover: 30        # scene-wide percentage; AOI-specific cover is checked separately
+  top_n_report: 5
+  # Dry-season windows for Rondonia (June to September) so both dates are comparable.
+  windows:
+    - label: date_a_2021
+      start: "2021-06-15"
+      end: "2021-09-15"
+    - label: date_b_2025
+      start: "2025-06-15"
+      end: "2025-09-15"
+  worldcover_datetime: "2020-01-01/2021-12-31"
