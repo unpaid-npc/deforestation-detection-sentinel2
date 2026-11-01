@@ -7,9 +7,11 @@ project:
 aoi:
   name: rondonia_candidate_1
   # [min_lon, min_lat, max_lon, max_lat] in EPSG:4326 (about 20 km x 20 km).
-  # CANDIDATE ONLY: to be verified visually before it is final.
-  bbox_wgs84: [-63.00, -10.30, -62.82, -10.12]
-  # Expected projected CRS for this area (UTM zone 20S). The probe prints the real one.
+  # CANDIDATE ONLY: to be verified visually (see src/data/quicklook.py) before it is final.
+  # Shifted 0.02 degrees east of the first version so the AOI no longer touches the
+  # WorldCover tile boundary at -63.0 degrees longitude.
+  bbox_wgs84: [-62.98, -10.30, -62.80, -10.12]
+  # UTM zone 20S, confirmed by the STAC probe for tile 20LNP.
   expected_crs: "EPSG:32720"
 
 stac:
@@ -20,7 +22,7 @@ stac:
 search:
   max_cloud_cover: 30        # scene-wide percentage; AOI-specific cover is checked separately
   top_n_report: 5
-  # Dry-season windows for Rondonia (June to September) so both dates are comparable.
+  # Dry-season windows for Rondonia so both dates are comparable.
   windows:
     - label: date_a_2021
       start: "2021-06-15"
@@ -29,3 +31,16 @@ search:
       start: "2025-06-15"
       end: "2025-09-15"
   worldcover_datetime: "2020-01-01/2021-12-31"
+
+# Scenes chosen from the STAC probe: same MGRS tile (20LNP), same relative orbit (R053),
+# both in July (same season), lowest scene-wide cloud cover.
+scenes:
+  date_a:
+    item_id: "S2B_MSIL2A_20210709T142729_R053_T20LNP_20210710T065653"
+  date_b:
+    item_id: "S2C_MSIL2A_20250713T142811_R053_T20LNP_20250713T195215"
+
+worldcover:
+  # Substring that selects the product: 2021, version 2.0.0 (v200).
+  item_id_contains: "2021_v200"
+  forest_class: 10           # ESA WorldCover class 10 = "Tree cover"
