@@ -1,0 +1,46 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.mypy_cache/
+
+# Editor settings
+.vscode/
+
+# Secrets and credentials (never commit these)
+.env
+*.key
+secrets/
+credentials*.json
+
+# Large satellite data: keep folders, ignore contents
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/README.md
+
+# Generated outputs: keep folders, ignore contents
+# (small sample outputs can be added deliberately with: git add -f <file>)
+outputs/maps/*
+outputs/masks/*
+outputs/reports/*
+!outputs/maps/.gitkeep
+!outputs/masks/.gitkeep
+!outputs/reports/.gitkeep
+
+# Model checkpoints (publish via GitHub Releases instead)
+models/*.pt
+models/*.pth
+models/*.ckpt
+!models/README.md
+
+# OS files
+.DS_Store
+Thumbs.db
