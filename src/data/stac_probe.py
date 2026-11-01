@@ -25,7 +25,7 @@ import pystac
 import rasterio
 from pystac_client import Client
 from rasterio.warp import transform_bounds
-from rasterio.windows import Window, from_bounds
+from rasterio.windows import Window, from_bounds, intersection
 from shapely.geometry import box, shape
 
 from src.utils.config import load_config
@@ -39,9 +39,11 @@ SCL_INVALID_CLASSES: dict[int, str] = {
     0: "no data",
     1: "saturated/defective",
     3: "cloud shadow",
+    7: "unclassified/low prob cloud",
     8: "cloud (medium probability)",
     9: "cloud (high probability)",
     10: "thin cirrus",
+    11: "snow/ice",
 }
 
 
@@ -105,7 +107,7 @@ def pick_best_item(items: list[pystac.Item], bbox: Sequence[float]) -> pystac.It
 
 
 def read_scl_window(href: str, bbox: Sequence[float]) -> tuple[np.ndarray, str]:
-    """Read only the AOI window of an SCL raster.
+    """Read only the AOI window of an SCL raster safely bounded by image extents.
 
     Returns:
         The SCL array (rows, cols) and the raster's CRS as a string.
@@ -113,15 +115,18 @@ def read_scl_window(href: str, bbox: Sequence[float]) -> tuple[np.ndarray, str]:
     with rasterio.open(href) as src:
         left, bottom, right, top = transform_bounds("EPSG:4326", src.crs, *bbox)
         float_window = from_bounds(left, bottom, right, top, transform=src.transform)
-        window = Window(
-            col_off=max(0, int(round(float_window.col_off))),
-            row_off=max(0, int(round(float_window.row_off))),
-            width=int(round(float_window.width)),
-            height=int(round(float_window.height)),
-        )
-        if window.width <= 0 or window.height <= 0:
-            raise ValueError(f"AOI window is empty for this raster: {window}")
-        data = src.read(1, window=window)
+        
+        # Snap to integer pixels
+        target_window = float_window.round_offsets().round_lengths()
+        
+        # Safely intersect with the actual raster bounds to avoid out-of-bounds errors
+        raster_extent = Window(0, 0, src.width, src.height)
+        safe_window = intersection(target_window, raster_extent)
+        
+        if safe_window.width <= 0 or safe_window.height <= 0:
+            raise ValueError(f"AOI window does not intersect this raster: {target_window}")
+            
+        data = src.read(1, window=safe_window)
         return data, str(src.crs)
 
 
