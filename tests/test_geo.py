@@ -53,6 +53,13 @@ def test_bbox_to_window_position_and_size(synthetic_raster: Path, aoi_bbox_wgs84
     assert abs(window.height - EXPECTED_SIZE) <= TOLERANCE_PX
 
 
+def test_bbox_to_window_outside_raster_raises(synthetic_raster: Path) -> None:
+    far_away_bbox = [-50.0, -10.3, -49.8, -10.12]
+    with rasterio.open(synthetic_raster) as src:
+        with pytest.raises(ValueError):
+            bbox_to_window(src, far_away_bbox)
+
+
 def test_read_band_window_reads_the_right_columns(synthetic_raster: Path, aoi_bbox_wgs84: list[float]) -> None:
     data, crs = read_band_window(str(synthetic_raster), aoi_bbox_wgs84)
     assert crs == CRS_UTM
@@ -71,3 +78,7 @@ def test_snap_window_to_even_expands_and_contains_original() -> None:
     assert snapped.col_off + snapped.width >= original.col_off + original.width
     assert snapped.row_off + snapped.height >= original.row_off + original.height
 
+
+def test_snap_window_to_even_outside_raster_raises() -> None:
+    with pytest.raises(ValueError):
+        snap_window_to_even(Window(0, 0, 11, 10), max_width=11, max_height=10)

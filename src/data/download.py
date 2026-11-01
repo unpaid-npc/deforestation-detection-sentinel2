@@ -284,32 +284,5 @@ def main(argv: Sequence[str] | None = None) -> int:
     logger.info("DOWNLOAD COMPLETE")
     return 0
 
-def clip_to_file(href: str, window: Window, out_path: Path) -> None:
-    """Read ``window`` from a remote or local raster and write it as a GeoTIFF."""
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = out_path.with_name(out_path.name + ".part")
-
-    with rasterio.open(href) as src:
-        fill_val = src.nodata if src.nodata is not None else 0
-        # Boundless=True guarantees the array shape strictly matches the window shape
-        data = src.read(window=window, boundless=True, fill_value=fill_val)
-        
-        profile = {
-            "driver": "GTiff",
-            "dtype": src.dtypes[0],
-            "count": src.count,
-            "width": int(window.width),
-            "height": int(window.height),
-            "crs": src.crs,
-            "transform": src.window_transform(window),
-            "nodata": fill_val,
-            "compress": "deflate",
-        }
-
-    with rasterio.open(tmp_path, "w", **profile) as dst:
-        dst.write(data)
-    tmp_path.replace(out_path)
-
-
 if __name__ == "__main__":
     sys.exit(main())
