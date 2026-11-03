@@ -173,23 +173,32 @@ def compute_band_statistics(
     Raises:
         ValueError: If no valid pixel exists or the statistics are not finite.
     """
-    channels = reflectance.shape[0]
-    count = 0
-    total = np.zeros(channels, dtype=np.float64)
-    total_sq = np.zeros(channels, dtype=np.float64)
+    valid_pixels = []
+    
     for row_start, row_stop, col_start, col_stop in regions:
         block = reflectance[:, row_start:row_stop, col_start:col_stop]
         block_valid = valid[row_start:row_stop, col_start:col_stop]
-        values = block[:, block_valid].astype(np.float64)  # shape (channels, n_valid)
-        count += values.shape[1]
-        total += values.sum(axis=1)
-        total_sq += np.square(values).sum(axis=1)
-    if count == 0:
+        # Extract valid pixels. Shape becomes (channels, n_valid)
+        values = block[:, block_valid].astype(np.float64)  
+        if values.shape[1] > 0:
+            valid_pixels.append(values)
+            
+    if not valid_pixels:
         raise ValueError("No valid training pixels available to compute normalisation statistics")
-    mean = total / count
-    std = np.maximum(np.sqrt(np.maximum(total_sq / count - mean**2, 0.0)), MIN_STD)
+        
+    # Concatenate all valid pixels from all regions along the pixel axis
+    all_valid = np.concatenate(valid_pixels, axis=1)
+    
+    # Compute mean and standard deviation safely
+    mean = np.mean(all_valid, axis=1)
+    std = np.std(all_valid, axis=1)
+    
+    # Ensure std is never zero to prevent division by zero during normalization
+    std = np.maximum(std, MIN_STD)
+    
     if not (np.isfinite(mean).all() and np.isfinite(std).all()):
         raise ValueError("Normalisation statistics are not finite; the reflectance contains NaN in valid pixels")
+        
     return mean.astype(np.float32), std.astype(np.float32)
 
 
