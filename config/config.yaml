@@ -53,3 +53,19 @@ preprocessing:
   reflectance_clip: [0.0, 1.0]
   # Fail if more than this fraction of the AOI has no WorldCover label after reprojection.
   max_label_nodata_fraction: 0.01
+
+dataset:
+  train_date: date_a          # the WorldCover 2021 labels belong to Date A
+  patch_size: 256
+  train_stride: 64            # overlapping patches inside training blocks
+  eval_stride: 256            # non-overlapping patches inside validation and test blocks
+  block_buffer_px: 64         # trimmed from each block edge that touches another block
+  max_invalid_fraction: 0.2   # skip patches where more than this fraction is masked or unlabelled
+  batch_size: 8
+  num_workers: 0              # simplest and most reliable on Windows
+  # Spatial blocks: nw = north-west, ne = north-east, sw = south-west, se = south-east.
+  # PROVISIONAL until the per-block statistics have been reviewed.
+  split:
+    train: [nw, sw]
+    val: [se]
+    test: [ne]
